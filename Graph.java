@@ -4,6 +4,8 @@ import java.util.HashMap;
 /**
  * Created on 04/11/16.
  */
+
+// TESTS GIT
 public class Graph {
     private HashMap<String,Node> graphMap;
     private final int graphOrder;
