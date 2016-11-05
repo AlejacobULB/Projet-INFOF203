@@ -37,7 +37,7 @@ public class Graph {
             graphMap.put(node.getName(), node);
             i++;
         }
-
+        // A revoir car peut être autre moyen.
         readFile.close();
         readFile = new FileReader(file);
         br = new BufferedReader(readFile);
