@@ -1,13 +1,25 @@
-JFLAGS = -g 
+JFLAGS = -g
 JC = javac
+JVM= java 
+FILE=
+.SUFFIXES: .java .class
 
-Class = Node.java Graph.java Main.java
-Object = $(Class:.java=.class)
+.java.class:
+	$(JC) $(JFLAGS) $*.java
 
-all: $(Object)
+CLASSES = \
+    Main.java \
+    Node.java \
+    Graph.java 
 
-$(Object):$(Class)
-	$(JC) $(JFLAGS) $^
+MAIN = Main
+
+default: classes
+
+classes: $(CLASSES:.java=.class)
+
+run: $(MAIN).class
+	$(JVM) $(MAIN)
 
 clean:
 	$(RM) *.class
