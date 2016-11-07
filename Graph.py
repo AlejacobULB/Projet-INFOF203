@@ -54,7 +54,7 @@ class Graph:
 
     def DepthFirst(self):
         couleur = dict()
-        for v in sorted(self.graphMap):
+        for v in self.graphMap:
             couleur[v] = 'blanc'
         for vertex in sorted(self.graphMap):
             if couleur[vertex] != "noir":
