@@ -1,5 +1,5 @@
 from Graph import*
 fileName = "graphe.txt"
 graph = Graph(fileName)
-graph.DepthFirst()
-graph.detectionCyle()
+
+print(graph.DepthFirst())

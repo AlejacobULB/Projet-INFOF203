@@ -4,12 +4,16 @@ class Graph:
         self.graphMap = dict()
         self.vertexDict = dict()
         self.graphOrder = 0
+        self.vertexList = list()
         graphData = self.readFile(fileName)
         self.graphOrder =int(graphData[0][0])
         self.addNodesFromFile(graphData)
         self.addDebtFromFile(graphData)
         self.createVertexDict()
-
+        self.id = 0
+        self.cnt = 0
+        self.pre = list()
+        self.post = list()
 
     def readFile(self,fileName):
         file = open(fileName,"r")
@@ -36,6 +40,10 @@ class Graph:
         while countData < len(graphData)-1:
             vertexNameFrom = graphData[countData][0]
             vertexNameTo = graphData[countData][1]
+            if vertexNameFrom not in self.vertexList:
+                self.vertexList.append(vertexNameFrom)
+            if vertexNameTo not in self.vertexList:
+                self.vertexList.append(vertexNameTo)
             amount = graphData[countData][2]
             if vertexNameTo not in self.vertexDict:
                 vertex = Vertex(vertexNameTo)
@@ -59,9 +67,10 @@ class Graph:
         parcours = []
         for v in self.graphMap:
             vertexTag[v] = 'white'
-        for vertex in sorted(self.graphMap):
-            if vertexTag[vertex] != "black":
-                parcours.append(self.dfs(vertex, vertexTag))
+        for i in range(self.graphOrder):
+            if vertexTag[self.vertexList[i]] != "black":
+                parcours.append(self.dfs(self.vertexList[i], vertexTag))
+                print(vertexTag)
         return parcours
 
     def dfs(self, s, vertexTag):
@@ -86,32 +95,36 @@ class Graph:
         return traversing
 
     def detectionCyle(self):
-        id, cnt = 0, 0
-        pre = dict()
-        post = dict()
-        for item in self.graphMap:
-            pre[item], post[item] = 0, 0
-        for item in self.graphMap:
-            if pre[item] == 0:
-                self.cycle(item, pre, post, id, cnt)
-        print(pre)
-        print(post)
+        self.pre = [-1 for i in range(self.graphOrder)]
+        self.post = [-1 for i in range(self.graphOrder)]
+        global cycleList
+        cycleList = list()
+        for i in range(self.graphOrder):
+            if self.pre[i] == -1:
+                self.cycle(self.vertexList[i], i)
+        print(self.pre)
+        print(self.post)
 
-    def cycle(self,item, pre, post, id, cnt):
-        id += 1
-        pre[item] = id
-        if self.graphMap[item] == None:
-            cnt+=1
-            post[item] = cnt
+    def cycle(self, item, index):
+        self.id += 1
+        self.pre[index] = self.id
+        if self.graphMap[item] is None:
+            self.cnt+=1
+            self.post[index] = self.cnt
             return
+        cycleList.append(item)
         for next in self.graphMap[item]:
-            if pre[next] == 0:
-                self.cycle(next,pre,post,id,cnt)
-            elif post[next] == 0:
+            nextIndex = self.vertexList.index(next)
+            if self.pre[nextIndex] == -1:
+                self.cycle(next, nextIndex)
+            elif self.post[nextIndex] == -1:
+                cycleList.append(next)
                 print("Cycle")
-
-        cnt +=1
-        post[item] = cnt
+                print(cycleList)
+                print(next)
+                cycleList[:] = []
+        self.cnt +=1
+        self.post[index] = self.cnt
 
 
     def printGraph(self):
