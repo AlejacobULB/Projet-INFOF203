@@ -126,6 +126,23 @@ class Graph:
         self.cnt +=1
         self.post[index] = self.cnt
 
+    def dtc(self):
+        for vertexName in self.vertexList:
+            if not self.vertexDict[vertexName].isTag():
+                stack = Stack()
+                self.c(self.vertexDict[vertexName], stack)
+
+    def c(self, vertex, stack):
+        debtList = vertex.getDebt()
+        vertex.setTag()
+        for debt in debtList:
+            if stack.getLastVertexIndex(vertex) == -1:
+                stack.push(debt)
+                self.c(debt[1], stack)
+                stack.pop()
+            else:
+                print("cycle")
+
 
     def printGraph(self):
         for key in self.vertexDict:
@@ -135,4 +152,31 @@ class Graph:
             for item in vertex.getDebt():
                 print(" Vertex {} has debt to Vertex {} for {} euro".format(key, item[1].getName(),item[2]))
             print()
-        
+
+class Stack:
+    def __init__(self):
+        self.stack = list()
+
+    def getItem(self, index):
+        return self.stack[index]
+
+    def push(self, item):
+        self.stack.append(item)
+
+    def pop(self):
+        return self.stack.pop()
+
+    def getSize(self):
+        return len(self.stack)
+
+    def getLastVertexIndex(self, vertex):
+        vertexIndex = -1
+        sizeStack = self.getSize()
+        while sizeStack > 0 and vertexIndex == -1:
+            sizeStack -= 1
+            if self.getItem(sizeStack - 1)[0] == vertex:
+                vertexIndex = sizeStack
+        return vertexIndex
+
+
+

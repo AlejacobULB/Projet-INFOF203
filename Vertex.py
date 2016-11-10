@@ -3,7 +3,8 @@ class Vertex:
         self.name = name
         self.debt = []
         self.getNumberOfConnexions = 0
-    
+        self.tag = False
+
     def getName(self):
         return self.name
     
@@ -12,7 +13,13 @@ class Vertex:
     
     def getDebt(self):
         return self.debt
-    
+
+    def isTag(self):
+        return self.tag
+
+    def setTag(self):
+        self.tag = True
+
     def addDebt(self, VertexTo, amount):
         self.debt.append(list())
         self.debt[self.getNumberOfConnexions].append(self)
