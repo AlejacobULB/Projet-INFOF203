@@ -25,6 +25,22 @@ class Graph:
     def add_edge(self, node1, node2, weight):
         self._graph[node1].add(Edge(node=node2, weight=weight))
       
+    def get_weight(self, node1, node2):
+        if node1 not in self._graph:
+            print("No adjacent for this node")
+            return
+        for edge in self._graph[node1]:
+            if edge.node == node2:
+                return edge.weight
+
+    def get_node_to(self, node1, weight):
+        if node1 not in self._graph:
+            print("No adjacent for this node")
+            return
+        for edge in self._graph[node1]:
+            if edge.weight == weight:
+                return edge.node
+
 
 
 #     def readFile(self,fileName):
