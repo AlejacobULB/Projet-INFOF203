@@ -11,9 +11,7 @@ class Graph:
         self.addDebtFromFile(graphData)
         self.createVertexDict()
         self.id = 0
-        self.cnt = 0
-        self.pre = list()
-        self.post = list()
+        self.val = [0 for i in range(self.graphOrder)]
 
     def readFile(self,fileName):
         file = open(fileName,"r")
@@ -75,7 +73,7 @@ class Graph:
 
     def dfs(self, s, vertexTag):
         traversing = [s]
-        vertexTag[s] = 'gris'
+        vertexTag[s] = 'grey'
         stack = [s]
         while stack:
             u = stack[-1]
@@ -94,54 +92,47 @@ class Graph:
                 vertexTag[u] = 'black'
         return traversing
 
-    def detectionCyle(self):
-        self.pre = [-1 for i in range(self.graphOrder)]
-        self.post = [-1 for i in range(self.graphOrder)]
-        global cycleList
-        cycleList = list()
-        for i in range(self.graphOrder):
-            if self.pre[i] == -1:
-                self.cycle(self.vertexList[i], i)
-        print(self.pre)
-        print(self.post)
-
-    def cycle(self, item, index):
-        self.id += 1
-        self.pre[index] = self.id
-        if self.graphMap[item] is None:
-            self.cnt+=1
-            self.post[index] = self.cnt
-            return
-        cycleList.append(item)
-        for next in self.graphMap[item]:
-            nextIndex = self.vertexList.index(next)
-            if self.pre[nextIndex] == -1:
-                self.cycle(next, nextIndex)
-            elif self.post[nextIndex] == -1:
-                cycleList.append(next)
-                print("Cycle")
-                print(cycleList)
-                print(next)
-                cycleList[:] = []
-        self.cnt +=1
-        self.post[index] = self.cnt
-
-    def dtc(self):
+    def detection_cycle(self):
         for vertexName in self.vertexList:
             if not self.vertexDict[vertexName].isTag():
                 stack = Stack()
-                self.c(self.vertexDict[vertexName], stack)
+                self.cycle(self.vertexDict[vertexName], stack)
 
-    def c(self, vertex, stack):
+    def cycle(self, vertex, stack):
         debtList = vertex.getDebt()
         vertex.setTag()
-        for debt in debtList:
+        for i in range(len(debtList)):
+            debt = debtList[i]
             if stack.getLastVertexIndex(vertex) == -1:
                 stack.push(debt)
-                self.c(debt[1], stack)
+                self.cycle(debt[1], stack)
                 stack.pop()
             else:
                 print("cycle")
+
+    def biconnected_component_search(self):
+        for i in range(self.graphOrder):
+            if self.val[i] == 0:
+                self.bc(i)
+
+    def bc(self, i):
+        self.id +=1
+        self.val[i] = self.id
+        min = self.id
+        if self.graphMap[self.vertexList[i]] == None:
+            return min
+        for vertex in self.graphMap[self.vertexList[i]]:
+            vertexOrder = self.vertexList.index(vertex)
+            if self.val[vertexOrder] == 0:
+                m = self.bc(vertexOrder)
+                if m < min:
+                    min = m
+                if m >= self.val[i]:
+                    print(self.vertexList[i])
+            else:
+                if self.val[vertexOrder] < min:
+                    min = self.val[vertexOrder]
+        return min
 
 
     def printGraph(self):
@@ -174,7 +165,7 @@ class Stack:
         sizeStack = self.getSize()
         while sizeStack > 0 and vertexIndex == -1:
             sizeStack -= 1
-            if self.getItem(sizeStack - 1)[0] == vertex:
+            if self.getItem(sizeStack)[0] == vertex:
                 vertexIndex = sizeStack
         return vertexIndex
 
