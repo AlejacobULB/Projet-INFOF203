@@ -7,7 +7,7 @@ class GraphException(Exception):
 class Graph:
     def __init__(self):
         self._graph = defaultdict(dict)
-        self._node_list = set()
+        self._nodes = set()
 
     @classmethod
     def load(cls, fileName):
@@ -20,55 +20,22 @@ class Graph:
                 continue
             node1, node2, weight = line.split(" ")
             weight = int(weight)
-            graph.add_edge(node1, node2, weight)
-            graph._node_list.add(node1)
-            graph._node_list.add(node2)
-       
+            graph.add_edge(node1, node2, weight)       
         return graph
 
     def add_edge(self, node1, node2, weight):
         self._graph[node1][node2] = {"weight": weight}
-      
+        self._nodes.add(node1)
+        self._nodes.add(node2)
+
     def get_weight(self, node1, node2):
         if node1 not in self._graph and node2 not in self._graph[node1]:
             raise GraphException("No edge between {} and {}".format(node1, node2))
         return self._graph[node1][node2]["weight"]
 
-    def DepthFirst(self):
-        vertexTag = dict()
-        parcours = []
-        for v in self._node_list:
-            vertexTag[v] = 'white'
-        for i in range(len(self._node_list)):
-            if vertexTag[self._node_list[i]] != "black":
-                parcours.append(self.dfs(self._node_list[i], vertexTag))
-                print(vertexTag) 
-        return parcours
-
-    def dfs(self, s, vertexTag):
-        traversing = [s]
-        vertexTag[s] = 'grey'
-        stack = [s]
-        while stack:
-            u = stack[-1]
-            if s not in self._graph:
-                stack.pop()
-                vertexTag[u] = "black"
-                continue
-            vertexSuccessor = [successor.node for successor in self._graph[u] if vertexTag[successor.node] == 'white']
-            if vertexSuccessor:
-                successor = vertexSuccessor[0]
-                vertexTag[successor] = 'grey'
-                traversing.append(successor)
-                stack.append(successor)
-            else:
-                stack.pop()
-                vertexTag[u] = 'black'
-        return traversing
-
     def find_all_cycles(self):
         cycle_detected = set()
-        for node in self._node_list:
+        for node in self._nodes:
             self._visit(node, cycle_detected)
         return cycle_detected
 
@@ -88,3 +55,48 @@ class Graph:
             for connected_node in connected_nodes:
                 self._visit(connected_node, cycle_detected, visited)
             visited.pop()
+
+    def iter_edges(self):
+
+        for node1, edge in self._graph.items():
+            for node2, attr in edge.items():
+                yield node1, node2, attr["weight"]
+
+    def find_communities(self):
+        undirected_graph = GraphUndirected.from_graph(self)
+        return undirected_graph.find_communities()
+
+
+class GraphUndirected(Graph):
+    @classmethod
+    def from_graph(cls, directed_graph):
+        undirected_graph = cls()
+        for node1, node2, weight in directed_graph.iter_edges():
+            undirected_graph.add_edge(node1, node2, weight)
+        return undirected_graph
+
+    def add_edge(self, node1, node2, weight):
+        super().add_edge(node1, node2, weight)
+        super().add_edge(node2, node1, weight)
+
+    def find_communities(self):
+        communities = set()
+        visited = set()
+        for node in self._nodes:
+            if node in visited:
+                continue
+            community = frozenset(self._dfs(node))
+            visited.update(community)
+            communities.add(community)
+        return communities
+
+    def _dfs(self, node, visited=None):
+        if visited is None:
+            visited = set()
+        visited.add(node)
+        for other in self._graph[node]:
+            if other in visited:
+                continue
+            self._dfs(other, visited)
+        return visited
+
