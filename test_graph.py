@@ -1,6 +1,6 @@
 import unittest
 
-from graph import Graph
+from graph import Graph, GraphException
 
 class TestGraph(unittest.TestCase):
 
@@ -11,7 +11,10 @@ class TestGraph(unittest.TestCase):
     def test_get_weigth(self):
         test_graph = Graph.load("graphe.txt")
         self.assertEqual(test_graph.get_weight("A","B"), 10)
-        self.assertEqual(test_graph.get_weight("H","B"), None)
+        with self.assertRaises(GraphException) as cm:
+            test_graph.get_weight("H","B")
+        self.assertEqual(str(cm.exception), "No edge between H and B")
+
 
     # def test_get_node_to(self):
     #     test_graph = Graph.load("graphe.txt")
@@ -22,10 +25,9 @@ class TestGraph(unittest.TestCase):
     #     test_graph =Graph.load("graphe.txt")
     #     self.assertEqual(test_graph.DepthFirst(), [["A","B","H","C","D","E","G","F"],["L","M","N"]])
 
-    def test_detection_cycle(self):
+    def test_find_all_cycles(self):
         test_graph = Graph.load("graphe.txt")
-        print(test_graph.detection_cycle())
-        self.assertEqual(test_graph.detection_cycle(), {("A", "C", "B"),
+        self.assertEqual(test_graph.find_all_cycles(), {("A", "C", "B"),
                           ("A", "B"),
                           ("D", "E", "F"),
                           ("E", "G")})
