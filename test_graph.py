@@ -24,7 +24,11 @@ class TestGraph(unittest.TestCase):
 
     def test_detection_cycle(self):
         test_graph = Graph.load("graphe.txt")
-        self.assertEqual(test_graph.detection_cycle(),[])
+        print(test_graph.detection_cycle())
+        self.assertEqual(test_graph.detection_cycle(), {("A", "C", "B"),
+                          ("A", "B"),
+                          ("D", "E", "F"),
+                          ("E", "G")})
         
 if __name__ == "__main__":
     unittest.main()

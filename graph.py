@@ -5,12 +5,13 @@ Edge = namedtuple("Edge", "node weight")
 
 class Graph:
     def __init__(self):
+
         self._graph = defaultdict(set)
         self._node_list = list()
         # self.val = dict()
         # self.id = 0
         # self.biconnected_component =list()
-        self.cycle_detected = list()
+        self.cycle_detected = set()
 
     @classmethod
     def load(cls, fileName):
@@ -91,29 +92,26 @@ class Graph:
 
     def detection_cycle(self):
         cycle_solution = list()
-        vertexTag = dict()
-        for node in self._node_list:
-            vertexTag[node] = False
         for node in self._node_list:
             cycle_solution.append(node)
-            vertexTag[node] = True
-            self.cycle(node, cycle_solution, vertexTag)
+            self.cycle(node,cycle_solution)
             cycle_solution = []
         return self.cycle_detected
 
-    def cycle(self, node, cycle_solution, vertexTag):
-        if len(cycle_solution) != 1 and vertexTag[node] :
-            if not self.verify_cycle(cycle_solution):
-                self.cycle_detected.append(cycle_solution)
+    def cycle(self, node, cycle_solution, visited=set()):
+        visited.add(node)
+        if node in visited and len(cycle_solution) > 1:
+            if not self.verify_cycle(cycle_solution):   
+                self.cycle_detected.add(tuple(cycle_solution[:]))
         else:
             edges = self._graph[node]
             for edge in edges:
                 successor = edge.node
-                if successor in self._graph and not vertexTag[successor]:
+                if successor not in visited:
                     cycle_solution.append(successor)
-                    vertexTag[successor] = True
-                    self.cycle(successor, cycle_solution, vertexTag)
-        vertexTag[node] = False
+                    visited.add(successor)
+                    self.cycle(successor, cycle_solution, visited)
+
 
     def verify_cycle(self, cycle_solution):
         for cycle in self.cycle_detected:
