@@ -92,6 +92,10 @@ class Graph:
         undirected_graph = GraphUndirected.from_graph(self)
         return undirected_graph.find_communities()
 
+    def find_biconnected_component(self):
+        undirected_graph = GraphUndirected.from_graph(self)
+        return undirected_graph.find_biconnected_component()
+
 
 class GraphUndirected(Graph):
     @classmethod
@@ -125,3 +129,14 @@ class GraphUndirected(Graph):
                 continue
             self._dfs(other, visited)
         return visited
+
+    def find_biconnected_component(self):
+        val = dict()
+        count = 0
+        biconnected_components = 
+        for node in self._nodes():
+            val[node] = 0
+        for node in self._nodes:
+            if val[node] == 0:
+                self.explore(node, val, count):
+
