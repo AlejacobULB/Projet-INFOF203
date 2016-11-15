@@ -46,6 +46,20 @@ class TestGraph(unittest.TestCase):
                         }
                     )   
 
+    def test_detected_and_resolve_all_cycles(self):
+        self.test_graph.detected_and_solve_all_cycles()
+        self.assertEqual(self.test_graph.get_weight("A","B"),0)
+        self.assertEqual(self.test_graph.get_weight("B","A"),0)
+        self.assertEqual(self.test_graph.get_weight("A","C"),40)
+        self.assertEqual(self.test_graph.get_weight("C","B"),20)
+        self.assertEqual(self.test_graph.get_weight("B","A"),0)
+        self.assertEqual(self.test_graph.get_weight("E","G"),0)
+        self.assertEqual(self.test_graph.get_weight("G","E"),10)
+        self.assertEqual(self.test_graph.get_weight("D","E"),0)
+        self.assertEqual(self.test_graph.get_weight("E","F"),10)
+        self.assertEqual(self.test_graph.get_weight("F","D"),35)
+
+
 
 class TestGraphUndirected(unittest.TestCase):
 

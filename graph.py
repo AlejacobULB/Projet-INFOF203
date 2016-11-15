@@ -32,6 +32,32 @@ class Graph:
         if node1 not in self._graph and node2 not in self._graph[node1]:
             raise GraphException("No edge between {} and {}".format(node1, node2))
         return self._graph[node1][node2]["weight"]
+    
+    def set_weight(self, node1, node2, weight):
+        if node1 not in self._graph and node2 not in self._graph[node1]:
+            raise GraphException("No edge between {} and {}".format(node1, node2))
+        self._graph[node1][node2]["weight"] = weight
+
+    def _resolve_cycle(self, cycle):
+        all_weight = []
+        for index, node in enumerate(cycle):
+            if index != len(cycle)-1:
+                weight = self.get_weight(node, cycle[index+1])
+            else:
+                weight = self.get_weight(node,cycle[0])
+            all_weight.append(weight)
+        min_weight = min(all_weight)
+        all_weight = [weight - min_weight for weight in all_weight]
+        for index, node in enumerate (cycle):
+            if index != len(cycle)-1:
+                self.set_weight(node, cycle[index+1], all_weight[index])
+            else:
+                self.set_weight(node, cycle[0], all_weight[index])
+
+    def detected_and_solve_all_cycles(self):
+        cycles = self.find_all_cycles()
+        for cycle in cycles:
+            self._resolve_cycle(cycle)
 
     def find_all_cycles(self):
         cycle_detected = set()
@@ -99,4 +125,3 @@ class GraphUndirected(Graph):
                 continue
             self._dfs(other, visited)
         return visited
-
