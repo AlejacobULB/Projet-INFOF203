@@ -55,7 +55,7 @@ class Graph:
                 self.set_weight(node, cycle[0], all_weight[index])
 
     def detected_and_solve_all_cycles(self):
-        cycles = self.find_all_cycles()
+        cycles = sorted(self.find_all_cycles(), key=len)
         for cycle in cycles:
             self._resolve_cycle(cycle)
 
