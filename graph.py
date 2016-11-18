@@ -96,6 +96,11 @@ class Graph:
         undirected_graph = GraphUndirected.from_graph(self)
         return undirected_graph.find_biconnected_component()
 
+    def find_highest_friend_group(self):
+        undirected_graph = GraphUndirected.from_graph(self)
+        friend_group = undirected_graph.find_highest_friend_group()
+        return friend_group
+
 
 class GraphUndirected(Graph):
     @classmethod
@@ -130,13 +135,38 @@ class GraphUndirected(Graph):
             self._dfs(other, visited)
         return visited
 
-    def find_biconnected_component(self):
-        val = dict()
-        count = 0
-        biconnected_components = 
-        for node in self._nodes():
-            val[node] = 0
+    def find_highest_friend_group(self):
+        friend_groups = set()
         for node in self._nodes:
-            if val[node] == 0:
-                self.explore(node, val, count):
+            self._visit(node, friend_groups)
+        friend_groups = sorted(friend_groups, key=len)
+        highest_friend_group = friend_groups[-1]
+        return highest_friend_group
+
+    def _visit(self, node, friend_groups, visited=list()):
+        if node in visited:
+            # Cycle trouvé
+            # On veut l'ajouter en partant du node avec la plus petite valeur
+            index = visited.index(node)
+            group = visited[index:]
+            if len(group) >= 3:
+                min_node = min(group)
+                min_index = group.index(min_node)
+                group = group[min_index:] + group[:min_index]
+                if not self._verify_group(group, friend_groups):
+                    friend_groups.add(tuple(group))
+        else:
+            visited.append(node)
+            connected_nodes = self._graph[node]
+            for connected_node in connected_nodes:
+                self._visit(connected_node, friend_groups, visited)
+            visited.pop()
+
+    def _verify_group(self,group, friend_groups):
+        res = False
+        for friend_group in friend_groups:
+            if len(group) == len(friend_group) and all(friend in friend_group for friend in group):
+                res = True
+        return res
+
 
