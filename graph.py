@@ -149,12 +149,11 @@ class GraphUndirected(Graph):
             # On veut l'ajouter en partant du node avec la plus petite valeur
             index = visited.index(node)
             group = visited[index:]
-            if len(group) >= 3:
-                min_node = min(group)
-                min_index = group.index(min_node)
-                group = group[min_index:] + group[:min_index]
-                if not self._verify_group(group, friend_groups):
-                    friend_groups.add(tuple(group))
+            min_node = min(group)
+            min_index = group.index(min_node)
+            group = group[min_index:] + group[:min_index]
+            if not self._verify_group(group, friend_groups):
+                friend_groups.add(tuple(group))
         else:
             visited.append(node)
             connected_nodes = self._graph[node]
