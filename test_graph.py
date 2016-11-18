@@ -62,9 +62,9 @@ class TestGraph(unittest.TestCase):
 
     def test_fin_highest_frien_group(self):
         self.assertIn(self.test_graph.find_highest_friend_group(), [
-            ('A', 'C', 'B')
-            ('D', 'E', 'F')
-            ('L', 'M', 'N')
+            ('A', 'C', 'B'),
+            ('D', 'E', 'F'),
+            ('L', 'M', 'N'),
         ])
 
 
