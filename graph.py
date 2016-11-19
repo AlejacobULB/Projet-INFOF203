@@ -135,37 +135,81 @@ class GraphUndirected(Graph):
             self._dfs(other, visited)
         return visited
 
-    def find_highest_friend_group(self):
-        friend_groups = set()
+    def find_biconnected_component(self):
+        pre = dict()
+        post = dict()
+        biconnected_component = set()
+        count = 0
         for node in self._nodes:
-            self._visit(node, friend_groups)
-        friend_groups = sorted(friend_groups, key=len)
-        highest_friend_group = friend_groups[-1]
-        return highest_friend_group
+            pre[node] = -1
+            post[node] = -1
+        for node in self._nodes:
+            if pre[node] == -1:
+                self._explore(node, node, pre, post, biconnected_component, count)
+        print(biconnected_component)
 
-    def _visit(self, node, friend_groups, visited=list()):
-        if node in visited:
+    def _explore(self, node, successor, pre, post, biconnected_component, count):
+        children = 0
+        count += 1
+        pre[successor] = count
+        post[successor] = count
+        for next_node in self._graph[successor]:
+            if pre[next_node] == -1:
+                children += 1
+                self._explore(successor, next_node, pre, post, biconnected_component, count)
+                post[successor] = min(post[successor], post[next_node])
+                if post[next_node] >= pre[successor] and node != successor:
+                    biconnected_component.add(successor)
+            elif next_node != node:
+                post[successor] = min(post[successor], pre[next_node])
+        if (node == successor) and (children > 1):
+            biconnected_component.add(successor)
+
+    def find_highest_friend_group(self):
+        # Find all cycles
+        # For each cycle sorted by length decreasing:
+        #   If it's a complete subgraph:
+        #       Return the solution
+        #
+        all_cycles = self.find_all_cycles()
+        for cycle in sorted(all_cycles, key=len, reverse=True):
+            for node in cycle:
+                neighbours = set(cycle)
+                neighbours.remove(node)
+                if not neighbours.issubset(self._graph[node].keys()):
+                    break
+            return cycle
+
+    def find_all_cycles(self):
+        cycle_detected = set()
+        for node in self._nodes:
+            self._visit(node, cycle_detected)
+        return cycle_detected
+
+    def _visit(self, node, cycle_detected, visited=list()):
+        if visited and node == visited[0]:
+            if len(visited) <= 2:
+                return
             # Cycle trouvé
-            # On veut l'ajouter en partant du node avec la plus petite valeur
-            index = visited.index(node)
-            group = visited[index:]
-            min_node = min(group)
-            min_index = group.index(min_node)
-            group = group[min_index:] + group[:min_index]
-            if not self._verify_group(group, friend_groups):
-                friend_groups.add(tuple(group))
+            # Normalisation du cycle trouvé:
+            # On veut ajouter le cycle en partant du node avec la plus petite valeur
+            # suivi du node ayant la deuxième plus petite valeur
+            min_node = min(visited)
+            min_index = visited.index(min_node)
+            visited = visited[min_index:] + visited[:min_index]
+            if visited[1] > visited[-1]:
+                visited = self._invert_cycle(visited)
+            cycle_detected.add(tuple(visited))
         else:
             visited.append(node)
             connected_nodes = self._graph[node]
-            for connected_node in connected_nodes:
-                self._visit(connected_node, friend_groups, visited)
+            avoid_nodes = set(visited[1:])
+            for connected_node in connected_nodes.keys() - avoid_nodes:
+                self._visit(connected_node, cycle_detected, visited)
             visited.pop()
 
-    def _verify_group(self,group, friend_groups):
-        res = False
-        for friend_group in friend_groups:
-            if len(group) == len(friend_group) and all(friend in friend_group for friend in group):
-                res = True
-        return res
+    @staticmethod
+    def _invert_cycle(cycle):
+        return [cycle[0]] + cycle[1:][::-1]
 
 

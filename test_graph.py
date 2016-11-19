@@ -61,25 +61,46 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(self.test_graph.get_weight("E", "F"), 10)
         self.assertEqual(self.test_graph.get_weight("F", "D"), 35)
 
-    def test_fin_highest_frien_group(self):
+    @unittest.skip("test later")
+    def test_find_highest_friend_group(self):
         self.assertIn(self.test_graph.find_highest_friend_group(), [
             ('A', 'C', 'B'),
+            ('A', 'B', 'C'),
             ('D', 'E', 'F'),
+            ('D', 'F', 'E'),
+            ('L', 'M', 'N'),
             ('L', 'N', 'M'),
         ])
 
+    @unittest.skip("test later")
+    def test_find_biconnected_component(self):
+        self.assertEqual(self.test_graph.find_biconnected_component(), {"B", "C", "D", "E"})
 
 class TestGraphUndirected(unittest.TestCase):
-    def test_create_from_directed_graph(self):
+
+    def setUp(self):
         test_graph = Graph.load("graphe.txt")
-        test_graph_undirected = GraphUndirected.from_graph(test_graph)
-        self.assertEqual(test_graph_undirected.get_weight("D", "F"), 50)
+        self.undirected_graph = GraphUndirected.from_graph(test_graph)
+
+    def test_create_from_directed_graph(self):
+        self.assertEqual(self.undirected_graph.get_weight("D", "F"), 50)
 
     def test_add_edge(self):
         test_graph = GraphUndirected()
         test_graph.add_edge("A", "B", 10)
         self.assertEqual(test_graph.get_weight("B", "A"), 10)
         self.assertEqual(test_graph.get_weight("A", "B"), 10)
+
+    def test_find_all_cycles(self):
+        self.assertEqual(self.undirected_graph.find_all_cycles(), {("A", "B", "C"),
+                                                             ("D", "E", "F"),
+                                                             ("L", "M", "N")})
+
+    def test_find_highest_friend_group(self):
+        self.assertIn(self.undirected_graph.find_highest_friend_group(),
+                      {("A", "B", "C"),
+                       ("D", "E", "F"),
+                       ("L", "M", "N")})
 
 
 if __name__ == "__main__":
