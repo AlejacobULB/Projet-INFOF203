@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+
 class GraphException(Exception):
     pass
 
@@ -12,15 +13,15 @@ class Graph:
     @classmethod
     def load(cls, fileName):
         graph = cls()
-        with open(fileName,"r") as file:
+        with open(fileName, "r") as file:
             graphData = file.read()
         for i, line in enumerate(graphData.splitlines()):
             if i == 0:
-                #skip first line
+                # skip first line
                 continue
             node1, node2, weight = line.split(" ")
             weight = int(weight)
-            graph.add_edge(node1, node2, weight)       
+            graph.add_edge(node1, node2, weight)
         return graph
 
     def add_edge(self, node1, node2, weight):
@@ -32,7 +33,7 @@ class Graph:
         if node1 not in self._graph and node2 not in self._graph[node1]:
             raise GraphException("No edge between {} and {}".format(node1, node2))
         return self._graph[node1][node2]["weight"]
-    
+
     def set_weight(self, node1, node2, weight):
         if node1 not in self._graph and node2 not in self._graph[node1]:
             raise GraphException("No edge between {} and {}".format(node1, node2))
@@ -41,16 +42,16 @@ class Graph:
     def _resolve_cycle(self, cycle):
         all_weight = []
         for index, node in enumerate(cycle):
-            if index != len(cycle)-1:
-                weight = self.get_weight(node, cycle[index+1])
+            if index != len(cycle) - 1:
+                weight = self.get_weight(node, cycle[index + 1])
             else:
-                weight = self.get_weight(node,cycle[0])
+                weight = self.get_weight(node, cycle[0])
             all_weight.append(weight)
         min_weight = min(all_weight)
         all_weight = [weight - min_weight for weight in all_weight]
-        for index, node in enumerate (cycle):
-            if index != len(cycle)-1:
-                self.set_weight(node, cycle[index+1], all_weight[index])
+        for index, node in enumerate(cycle):
+            if index != len(cycle) - 1:
+                self.set_weight(node, cycle[index + 1], all_weight[index])
             else:
                 self.set_weight(node, cycle[0], all_weight[index])
 
@@ -69,7 +70,7 @@ class Graph:
         if node in visited:
             # Cycle trouvé
             # On veut l'ajouter en partant du node avec la plus petite valeur
-            index = visited.index(node)  
+            index = visited.index(node)
             cycle = visited[index:]
             min_node = min(cycle)
             min_index = cycle.index(min_node)
@@ -92,9 +93,9 @@ class Graph:
         undirected_graph = GraphUndirected.from_graph(self)
         return undirected_graph.find_communities()
 
-    def find_biconnected_component(self):
+    def find_social_hub(self, k):
         undirected_graph = GraphUndirected.from_graph(self)
-        return undirected_graph.find_biconnected_component()
+        return undirected_graph.find_social_hub(k)
 
     def find_highest_friend_group(self):
         undirected_graph = GraphUndirected.from_graph(self)
@@ -135,19 +136,39 @@ class GraphUndirected(Graph):
             self._dfs(other, visited)
         return visited
 
-    def find_articulation_point(self):
+    def find_social_hub(self, k):
+        articulation_points = self._find_articulation_points()
+        social_hub = set()
+        copy_graph = self._graph.copy()
+        for articulation_point in articulation_points:
+            count = 0
+            self._remove(articulation_point)
+            communities = self.find_communities()
+            for community in communities:
+                if len(community) >= k:
+                    count += 1
+            if count >= 2:
+                social_hub.add(articulation_point)
+        return social_hub
+
+    def _remove(self, node):
+        for successor in self._graph[node]:
+            del self._graph[successor][node]
+        del self._graph[node]
+
+    def _find_articulation_points(self):
         pre = dict()
         post = dict()
-        articulation_point = set()
+        articulation_points = set()
         count = 0
         for node in self._nodes:
             pre[node] = -1
             post[node] = -1
         for node in self._nodes:
-            self._explore(node, node, pre, post, articulation_point, count)
-        return articulation_point
+            self._explore(node, node, pre, post, articulation_points, count)
+        return articulation_points
 
-    def _explore(self, node, successor, pre, post, articulation_point, count):
+    def _explore(self, node, successor, pre, post, articulation_points, count):
         children = 0
         count += 1
         pre[successor] = count
@@ -155,14 +176,14 @@ class GraphUndirected(Graph):
         for next_node in self._graph[successor]:
             if pre[next_node] == -1:
                 children += 1
-                self._explore(successor, next_node, pre, post, articulation_point, count)
+                self._explore(successor, next_node, pre, post, articulation_points, count)
                 post[successor] = min(post[successor], post[next_node])
                 if post[next_node] >= pre[successor] and node != successor:
-                    articulation_point.add(successor)
+                    articulation_points.add(successor)
             elif next_node != node:
                 post[successor] = min(post[successor], pre[next_node])
         if (node == successor) and (children > 1):
-            articulation_point.add(successor)
+            articulation_points.add(successor)
 
     def find_highest_friend_group(self):
         # Find all cycles

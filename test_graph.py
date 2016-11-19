@@ -49,7 +49,6 @@ class TestGraph(unittest.TestCase):
 
     def test_detected_and_resolve_all_cycles(self):
         self.test_graph.detected_and_solve_all_cycles()
-        print(self.test_graph.get_weight("A", "B"))
         self.assertEqual(self.test_graph.get_weight("A", "B"), 0)
         self.assertEqual(self.test_graph.get_weight("B", "A"), 0)
         self.assertEqual(self.test_graph.get_weight("A", "C"), 40)
@@ -61,7 +60,6 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(self.test_graph.get_weight("E", "F"), 10)
         self.assertEqual(self.test_graph.get_weight("F", "D"), 35)
 
-    @unittest.skip("test later")
     def test_find_highest_friend_group(self):
         self.assertIn(self.test_graph.find_highest_friend_group(), [
             ('A', 'C', 'B'),
@@ -71,10 +69,6 @@ class TestGraph(unittest.TestCase):
             ('L', 'M', 'N'),
             ('L', 'N', 'M'),
         ])
-
-    @unittest.skip("test later")
-    def test_find_biconnected_component(self):
-        self.assertEqual(self.test_graph.find_biconnected_component(), {"B", "C", "D", "E"})
 
 class TestGraphUndirected(unittest.TestCase):
 
@@ -101,6 +95,9 @@ class TestGraphUndirected(unittest.TestCase):
                       {("A", "B", "C"),
                        ("D", "E", "F"),
                        ("L", "M", "N")})
+
+    def test_find_articulation_points(self):
+        self.assertEqual(self.undirected_graph._find_articulation_points(), {"B", "C", "D", "E"})
 
 
 if __name__ == "__main__":
