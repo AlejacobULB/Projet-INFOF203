@@ -135,20 +135,19 @@ class GraphUndirected(Graph):
             self._dfs(other, visited)
         return visited
 
-    def find_biconnected_component(self):
+    def find_articulation_point(self):
         pre = dict()
         post = dict()
-        biconnected_component = set()
+        articulation_point = set()
         count = 0
         for node in self._nodes:
             pre[node] = -1
             post[node] = -1
         for node in self._nodes:
-            if pre[node] == -1:
-                self._explore(node, node, pre, post, biconnected_component, count)
-        print(biconnected_component)
+            self._explore(node, node, pre, post, articulation_point, count)
+        return articulation_point
 
-    def _explore(self, node, successor, pre, post, biconnected_component, count):
+    def _explore(self, node, successor, pre, post, articulation_point, count):
         children = 0
         count += 1
         pre[successor] = count
@@ -156,14 +155,14 @@ class GraphUndirected(Graph):
         for next_node in self._graph[successor]:
             if pre[next_node] == -1:
                 children += 1
-                self._explore(successor, next_node, pre, post, biconnected_component, count)
+                self._explore(successor, next_node, pre, post, articulation_point, count)
                 post[successor] = min(post[successor], post[next_node])
                 if post[next_node] >= pre[successor] and node != successor:
-                    biconnected_component.add(successor)
+                    articulation_point.add(successor)
             elif next_node != node:
                 post[successor] = min(post[successor], pre[next_node])
         if (node == successor) and (children > 1):
-            biconnected_component.add(successor)
+            articulation_point.add(successor)
 
     def find_highest_friend_group(self):
         # Find all cycles
@@ -211,5 +210,4 @@ class GraphUndirected(Graph):
     @staticmethod
     def _invert_cycle(cycle):
         return [cycle[0]] + cycle[1:][::-1]
-
 
