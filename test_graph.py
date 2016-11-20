@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
 import unittest
 
 from graph import Graph, GraphException, GraphUndirected
@@ -70,6 +72,10 @@ class TestGraph(unittest.TestCase):
             ('L', 'N', 'M'),
         ])
 
+    def test_social_hub(self):
+        self.assertEqual(self.test_graph.find_social_hub(3), {"C", "D"})
+
+
 class TestGraphUndirected(unittest.TestCase):
 
     def setUp(self):
@@ -99,6 +105,16 @@ class TestGraphUndirected(unittest.TestCase):
     def test_find_articulation_points(self):
         self.assertEqual(self.undirected_graph._find_articulation_points(), {"B", "C", "D", "E"})
 
+    def test_find_subgraph(self):
+        expected = GraphUndirected()
+        expected.add_edge("L", "M", 20)
+        expected.add_edge("L", "N", 60)
+        expected.add_edge("M", "N", 10)
+        self.assertEqual(self.undirected_graph.find_subgraph("M"), expected)
+
+    def test_remove(self):
+        edges = self.undirected_graph.remove("L")
+        self.assertEqual(edges, {("L", "M", 20), ("L", "N", 60)})
 
 if __name__ == "__main__":
     unittest.main()

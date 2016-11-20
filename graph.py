@@ -1,4 +1,7 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
 from collections import defaultdict
+from copy import deepcopy
 
 
 class GraphException(Exception):
@@ -61,27 +64,39 @@ class Graph:
             self._resolve_cycle(cycle)
 
     def find_all_cycles(self):
+        def visit(node, visited=list()):
+            if node in visited:
+                # Cycle trouvé
+                # On veut l'ajouter en partant du node avec la plus petite valeur
+                index = visited.index(node)
+                cycle = visited[index:]
+                cycle = self._normalize(cycle)
+                cycle_detected.add(tuple(cycle))
+            else:
+                visited.append(node)
+                connected_nodes = self._graph[node]
+                for connected_node in connected_nodes:
+                    visit(connected_node, visited)
+                visited.pop()
+
         cycle_detected = set()
         for node in self._nodes:
-            self._visit(node, cycle_detected)
+            visit(node)
         return cycle_detected
 
-    def _visit(self, node, cycle_detected, visited=list()):
-        if node in visited:
-            # Cycle trouvé
-            # On veut l'ajouter en partant du node avec la plus petite valeur
-            index = visited.index(node)
-            cycle = visited[index:]
-            min_node = min(cycle)
-            min_index = cycle.index(min_node)
-            cycle = cycle[min_index:] + cycle[:min_index]
-            cycle_detected.add(tuple(cycle))
-        else:
-            visited.append(node)
-            connected_nodes = self._graph[node]
-            for connected_node in connected_nodes:
-                self._visit(connected_node, cycle_detected, visited)
-            visited.pop()
+    def _normalize(self, nodes):
+        """
+        Re-arrange the sequence of nodes starting by the smallest.
+
+        This allows for easy comparison between ordered sequences of nodes
+
+        :param nodes: sequence of nodes
+        :return: normalized sequence of nodes
+        """
+        min_node = min(nodes)
+        min_index = nodes.index(min_node)
+        nodes = nodes[min_index:] + nodes[:min_index]
+        return nodes
 
     def iter_edges(self):
 
@@ -104,12 +119,16 @@ class Graph:
 
 
 class GraphUndirected(Graph):
+
     @classmethod
     def from_graph(cls, directed_graph):
         undirected_graph = cls()
         for node1, node2, weight in directed_graph.iter_edges():
             undirected_graph.add_edge(node1, node2, weight)
         return undirected_graph
+
+    def __eq__(self, other):
+        return self._graph == other._graph
 
     def add_edge(self, node1, node2, weight):
         super().add_edge(node1, node2, weight)
@@ -139,22 +158,40 @@ class GraphUndirected(Graph):
     def find_social_hub(self, k):
         articulation_points = self._find_articulation_points()
         social_hub = set()
-        copy_graph = self._graph.copy()
         for articulation_point in articulation_points:
             count = 0
-            self._remove(articulation_point)
-            communities = self.find_communities()
+            subgraph = self.find_subgraph(articulation_point)
+            subgraph.remove(articulation_point)
+            communities = subgraph.find_communities()
             for community in communities:
                 if len(community) >= k:
                     count += 1
-            if count >= 2:
+            if count == 2:
                 social_hub.add(articulation_point)
         return social_hub
 
-    def _remove(self, node):
+    def remove(self, node):
+        edges = set()
         for successor in self._graph[node]:
+            edges.add((node, successor, self._graph[node][successor]["weight"]))
             del self._graph[successor][node]
         del self._graph[node]
+        self._nodes.remove(node)
+        return edges
+
+    def find_subgraph(self, node):
+        """
+        Trouve le sous-graphe contenant tous les noeuds atteignables depuis `node`.
+        :param node: Noeud d'où part la recherche
+        :return: Sous-graphe [GraphUndirected]
+        """
+        nodes = self._dfs(node)
+        subgraph = GraphUndirected()
+        for node in nodes:
+            subgraph._graph[node] = deepcopy(self._graph[node])
+        subgraph._nodes = nodes
+        return subgraph
+
 
     def _find_articulation_points(self):
         pre = dict()
@@ -193,42 +230,60 @@ class GraphUndirected(Graph):
         #
         all_cycles = self.find_all_cycles()
         for cycle in sorted(all_cycles, key=len, reverse=True):
+            valid = True
             for node in cycle:
                 neighbours = set(cycle)
                 neighbours.remove(node)
                 if not neighbours.issubset(self._graph[node].keys()):
+                    valid = False
                     break
+            if not valid:
+                continue
             return cycle
 
     def find_all_cycles(self):
+
+        def visit(node, cycle_detected, visited=list()):
+            if visited and node == visited[0]:
+                if len(visited) <= 2:
+                    return
+                # Cycle trouvé
+                # Normalisation du cycle trouvé:
+                # On veut ajouter le cycle en partant du node avec la plus petite valeur
+                # suivi du node ayant la deuxième plus petite valeur
+                visited = self._normalize(visited)
+
+                cycle_detected.add(tuple(visited))
+            else:
+                visited.append(node)
+                connected_nodes = self._graph[node]
+                avoid_nodes = set(visited[1:])
+                for connected_node in connected_nodes.keys() - avoid_nodes:
+                    visit(connected_node, cycle_detected, visited)
+                visited.pop()
+
         cycle_detected = set()
         for node in self._nodes:
-            self._visit(node, cycle_detected)
+            visit(node, cycle_detected)
+
         return cycle_detected
 
-    def _visit(self, node, cycle_detected, visited=list()):
-        if visited and node == visited[0]:
-            if len(visited) <= 2:
-                return
-            # Cycle trouvé
-            # Normalisation du cycle trouvé:
-            # On veut ajouter le cycle en partant du node avec la plus petite valeur
-            # suivi du node ayant la deuxième plus petite valeur
-            min_node = min(visited)
-            min_index = visited.index(min_node)
-            visited = visited[min_index:] + visited[:min_index]
-            if visited[1] > visited[-1]:
-                visited = self._invert_cycle(visited)
-            cycle_detected.add(tuple(visited))
-        else:
-            visited.append(node)
-            connected_nodes = self._graph[node]
-            avoid_nodes = set(visited[1:])
-            for connected_node in connected_nodes.keys() - avoid_nodes:
-                self._visit(connected_node, cycle_detected, visited)
-            visited.pop()
+    def _normalize(self, nodes):
+        """
+        Re-arrange the sequence of nodes starting by the smallest and followed by the second smallest.
+
+        This allows for easy comparison between ordered sequences of nodes
+
+        :param nodes: sequence of nodes
+        :return: normalized sequence of nodes
+        """
+        min_node = min(nodes)
+        min_index = nodes.index(min_node)
+        nodes = nodes[min_index:] + nodes[:min_index]
+        if nodes[1] > nodes[-1]:
+            nodes = self._invert_cycle(nodes)
+        return nodes
 
     @staticmethod
     def _invert_cycle(cycle):
         return [cycle[0]] + cycle[1:][::-1]
-

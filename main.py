@@ -1,11 +1,12 @@
-from graph import Graph
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+from graph import Graph, GraphUndirected
 import time
 
 if __name__ == '__main__':
     fileName = "graphe_2.txt"
-    start_time = time.time()
     graph = Graph.load(fileName)
-    print(graph.find_all_cycles())
-    print(graph.find_communities())
-    print(graph.find_highest_friend_group())
-    print("--- %s seconds ---" % (time.time() - start_time))
+    undirected_graph = GraphUndirected.from_graph(graph)
+    print(undirected_graph.find_highest_friend_group())
+
+
