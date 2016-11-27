@@ -2,15 +2,15 @@
 # -*- coding: utf-8 -*-
 import unittest
 
-from graph import Graph, GraphException, GraphUndirected
+from graph import Graph, GraphException, GraphUndirected, DirectedGraph
 
 
 class TestGraph(unittest.TestCase):
     def setUp(self):
-        self.test_graph = Graph.load("graphe.txt")
+        self.test_graph = DirectedGraph.load("graphe.txt")
 
     def test_load_from_filename(self):
-        self.assertIsInstance(self.test_graph, Graph)
+        self.assertIsInstance(self.test_graph, DirectedGraph)
 
     def test_get_weigth(self):
         self.assertEqual(self.test_graph.get_weight("A", "B"), 10)
@@ -79,7 +79,7 @@ class TestGraph(unittest.TestCase):
 class TestGraphUndirected(unittest.TestCase):
 
     def setUp(self):
-        test_graph = Graph.load("graphe.txt")
+        test_graph = DirectedGraph.load("graphe.txt")
         self.undirected_graph = GraphUndirected.from_graph(test_graph)
 
     def test_create_from_directed_graph(self):

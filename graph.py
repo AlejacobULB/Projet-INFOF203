@@ -7,25 +7,14 @@ from copy import deepcopy
 class GraphException(Exception):
     pass
 
+class Graph():
 
-class Graph:
     def __init__(self):
         self._graph = defaultdict(dict)
         self._nodes = set()
 
-    @classmethod
-    def load(cls, fileName):
-        graph = cls()
-        with open(fileName, "r") as file:
-            graphData = file.read()
-        for i, line in enumerate(graphData.splitlines()):
-            if i == 0:
-                # skip first line
-                continue
-            node1, node2, weight = line.split(" ")
-            weight = int(weight)
-            graph.add_edge(node1, node2, weight)
-        return graph
+    def __eq__(self, other):
+        return self._graph == other._graph
 
     def add_edge(self, node1, node2, weight):
         self._graph[node1][node2] = {"weight": weight}
@@ -41,6 +30,31 @@ class Graph:
         if node1 not in self._graph and node2 not in self._graph[node1]:
             raise GraphException("No edge between {} and {}".format(node1, node2))
         self._graph[node1][node2]["weight"] = weight
+
+    def __str__(self):
+        output = ""
+        for node in self._graph:
+            for successor in self._graph[node]:
+                weight = self.get_weight(node, successor)
+                output += ("{} {} {} \n".format(node, successor, weight))
+        return output
+
+
+class DirectedGraph(Graph):
+
+    @classmethod
+    def load(cls, fileName):
+        graph = cls()
+        with open(fileName, "r") as file:
+            graphData = file.read()
+        for i, line in enumerate(graphData.splitlines()):
+            if i == 0:
+                # skip first line
+                continue
+            node1, node2, weight = line.split(" ")
+            weight = int(weight)
+            graph.add_edge(node1, node2, weight)
+        return graph
 
     def _resolve_cycle(self, cycle):
         all_weight = []
@@ -126,9 +140,6 @@ class GraphUndirected(Graph):
         for node1, node2, weight in directed_graph.iter_edges():
             undirected_graph.add_edge(node1, node2, weight)
         return undirected_graph
-
-    def __eq__(self, other):
-        return self._graph == other._graph
 
     def add_edge(self, node1, node2, weight):
         super().add_edge(node1, node2, weight)
