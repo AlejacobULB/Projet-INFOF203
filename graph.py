@@ -10,11 +10,9 @@ class GraphException(Exception):
 class Graph():
 
     def __init__(self):
+        """Function who initialize a empty graph"""
         self._graph = defaultdict(dict)
         self._nodes = set()
-
-    def __eq__(self, other):
-        return self._graph == other._graph
 
     def add_edge(self, node1, node2, weight):
         self._graph[node1][node2] = {"weight": weight}
@@ -31,7 +29,13 @@ class Graph():
             raise GraphException("No edge between {} and {}".format(node1, node2))
         self._graph[node1][node2]["weight"] = weight
 
+    def iter_edges(self):
+        for node1, edge in self._graph.items():
+            for node2, attr in edge.items():
+                yield node1, node2, attr["weight"]
+
     def __str__(self):
+        """Represent the graph"""
         output = ""
         for node in self._graph:
             for successor in self._graph[node]:
@@ -44,19 +48,30 @@ class DirectedGraph(Graph):
 
     @classmethod
     def load(cls, fileName):
+        """Class method which create the graph from a file who contains all the data like : NodeFrom NodeTo weight"""
         graph = cls()
         with open(fileName, "r") as file:
             graphData = file.read()
         for i, line in enumerate(graphData.splitlines()):
             if i == 0:
-                # skip first line
+                # skip first line, because we don't need it in our implementation of the problem
                 continue
             node1, node2, weight = line.split(" ")
             weight = int(weight)
             graph.add_edge(node1, node2, weight)
         return graph
 
+    def detect_and_solve_all_cycles(self):
+        cycles = sorted(self.find_all_cycles(), key=len)
+        for cycle in cycles:
+            self._resolve_cycle(cycle)
+
     def _resolve_cycle(self, cycle):
+        """
+        Function which solve the debts of a cycle by simplifying all the debts by smallest amounts.
+        One starts with the cycle having the smallest size.
+        Once a cycle is simplified, we place the new debts instead of old
+        """
         all_weight = []
         for index, node in enumerate(cycle):
             if index != len(cycle) - 1:
@@ -72,12 +87,12 @@ class DirectedGraph(Graph):
             else:
                 self.set_weight(node, cycle[0], all_weight[index])
 
-    def detected_and_solve_all_cycles(self):
-        cycles = sorted(self.find_all_cycles(), key=len)
-        for cycle in cycles:
-            self._resolve_cycle(cycle)
-
     def find_all_cycles(self):
+        """
+        Function which finds all the cycles contained in a graph.
+        A cycle is a continuation of node whose last node makes it possible to return to the first node.
+        :return: all cyles contains in a graph. The return value is contained a set.
+        """
         def visit(node, visited=list()):
             if node in visited:
                 # Cycle trouvé
@@ -112,19 +127,11 @@ class DirectedGraph(Graph):
         nodes = nodes[min_index:] + nodes[:min_index]
         return nodes
 
-    def iter_edges(self):
 
-        for node1, edge in self._graph.items():
-            for node2, attr in edge.items():
-                yield node1, node2, attr["weight"]
 
     def find_communities(self):
         undirected_graph = GraphUndirected.from_graph(self)
         return undirected_graph.find_communities()
-
-    def find_social_hub(self, k):
-        undirected_graph = GraphUndirected.from_graph(self)
-        return undirected_graph.find_social_hub(k)
 
     def find_highest_friend_group(self):
         undirected_graph = GraphUndirected.from_graph(self)
@@ -136,6 +143,7 @@ class GraphUndirected(Graph):
 
     @classmethod
     def from_graph(cls, directed_graph):
+        """Function which creates an undirected graph starting from a directed graph."""
         undirected_graph = cls()
         for node1, node2, weight in directed_graph.iter_edges():
             undirected_graph.add_edge(node1, node2, weight)
@@ -146,6 +154,13 @@ class GraphUndirected(Graph):
         super().add_edge(node2, node1, weight)
 
     def find_communities(self):
+        """
+        Function which finds all communities of a graph, that is made by depth first search starting from a node.
+        Depth First Search  is an algorithm for traversing graph
+        One starts at  a selecting some arbitrary node and explores recursively as far as possible along each branch.
+        When a traversing is found, we add it to a set and we update the visited set.
+        :return: a set with all the communities.
+        """
         communities = set()
         visited = set()
         for node in self._nodes:
@@ -166,86 +181,21 @@ class GraphUndirected(Graph):
             self._dfs(other, visited)
         return visited
 
-    def find_social_hub(self, k):
-        articulation_points = self._find_articulation_points()
-        social_hub = set()
-        for articulation_point in articulation_points:
-            count = 0
-            subgraph = self.find_subgraph(articulation_point)
-            subgraph.remove(articulation_point)
-            communities = subgraph.find_communities()
-            for community in communities:
-                if len(community) >= k:
-                    count += 1
-            if count == 2:
-                social_hub.add(articulation_point)
-        return social_hub
-
-    def remove(self, node):
-        edges = set()
-        for successor in self._graph[node]:
-            edges.add((node, successor, self._graph[node][successor]["weight"]))
-            del self._graph[successor][node]
-        del self._graph[node]
-        self._nodes.remove(node)
-        return edges
-
-    def find_subgraph(self, node):
-        """
-        Trouve le sous-graphe contenant tous les noeuds atteignables depuis `node`.
-        :param node: Noeud d'où part la recherche
-        :return: Sous-graphe [GraphUndirected]
-        """
-        nodes = self._dfs(node)
-        subgraph = GraphUndirected()
-        for node in nodes:
-            subgraph._graph[node] = deepcopy(self._graph[node])
-        subgraph._nodes = nodes
-        return subgraph
-
-
-    def _find_articulation_points(self):
-        pre = dict()
-        post = dict()
-        articulation_points = set()
-        count = 0
-        for node in self._nodes:
-            pre[node] = -1
-            post[node] = -1
-        for node in self._nodes:
-            self._explore(node, node, pre, post, articulation_points, count)
-        return articulation_points
-
-    def _explore(self, node, successor, pre, post, articulation_points, count):
-        children = 0
-        count += 1
-        pre[successor] = count
-        post[successor] = count
-        for next_node in self._graph[successor]:
-            if pre[next_node] == -1:
-                children += 1
-                self._explore(successor, next_node, pre, post, articulation_points, count)
-                post[successor] = min(post[successor], post[next_node])
-                if post[next_node] >= pre[successor] and node != successor:
-                    articulation_points.add(successor)
-            elif next_node != node:
-                post[successor] = min(post[successor], pre[next_node])
-        if (node == successor) and (children > 1):
-            articulation_points.add(successor)
-
     def find_highest_friend_group(self):
-        # Find all cycles
-        # For each cycle sorted by length decreasing:
-        #   If it's a complete subgraph:
-        #       Return the solution
-        #
+        """
+        Find all cycles
+        For each cycle sorted by length decreasing:
+        If it's a complete subgraph:
+        Return the solution
+        """
         all_cycles = self.find_all_cycles()
         for cycle in sorted(all_cycles, key=len, reverse=True):
             valid = True
             for node in cycle:
                 neighbours = set(cycle)
-                neighbours.remove(node)
+                neighbours.remove(node) # remove the node to have all the possible successors
                 if not neighbours.issubset(self._graph[node].keys()):
+                    # check if the set is a subset of all the successors of the withdrawn node.
                     valid = False
                     break
             if not valid:
@@ -253,11 +203,13 @@ class GraphUndirected(Graph):
             return cycle
 
     def find_all_cycles(self):
-
+        """
+        Function which finds all the cycles contained in a graph.
+        A cycle is a continuation of node whose last node makes it possible to return to the first node.
+        :return: all cyles contains in a graph. The return value is contained a set.
+        """
         def visit(node, cycle_detected, visited=list()):
             if visited and node == visited[0]:
-                if len(visited) <= 2:
-                    return
                 # Cycle trouvé
                 # Normalisation du cycle trouvé:
                 # On veut ajouter le cycle en partant du node avec la plus petite valeur
@@ -297,4 +249,7 @@ class GraphUndirected(Graph):
 
     @staticmethod
     def _invert_cycle(cycle):
+        """
+        Function which reverses a list starting from the second item until the end
+        """
         return [cycle[0]] + cycle[1:][::-1]

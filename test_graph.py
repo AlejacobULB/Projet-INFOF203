@@ -49,8 +49,8 @@ class TestGraph(unittest.TestCase):
                          }
                          )
 
-    def test_detected_and_resolve_all_cycles(self):
-        self.test_graph.detected_and_solve_all_cycles()
+    def test_detect_and_resolve_all_cycles(self):
+        self.test_graph.detect_and_solve_all_cycles()
         self.assertEqual(self.test_graph.get_weight("A", "B"), 0)
         self.assertEqual(self.test_graph.get_weight("B", "A"), 0)
         self.assertEqual(self.test_graph.get_weight("A", "C"), 40)
@@ -72,8 +72,6 @@ class TestGraph(unittest.TestCase):
             ('L', 'N', 'M'),
         ])
 
-    def test_social_hub(self):
-        self.assertEqual(self.test_graph.find_social_hub(3), {"C", "D"})
 
 
 class TestGraphUndirected(unittest.TestCase):
@@ -93,28 +91,27 @@ class TestGraphUndirected(unittest.TestCase):
 
     def test_find_all_cycles(self):
         self.assertEqual(self.undirected_graph.find_all_cycles(), {("A", "B", "C"),
-                                                             ("D", "E", "F"),
-                                                             ("L", "M", "N")})
+                                                               ("D", "E", "F"),
+                                                               ("L", "M", "N"),
+                                                               ('B', 'H'),
+                                                               ('A', 'C'),
+                                                               ('D', 'E'),
+                                                               ('A', 'B'),
+                                                               ('B', 'C'),
+                                                               ('D', 'F'),
+                                                               ('E', 'F'),
+                                                               ('L', 'M'),
+                                                               ('E', 'G'),
+                                                               ('L', 'N'),
+                                                               ('C', 'D'),
+                                                               ('M', 'N')
+                                                               })
 
     def test_find_highest_friend_group(self):
         self.assertIn(self.undirected_graph.find_highest_friend_group(),
                       {("A", "B", "C"),
                        ("D", "E", "F"),
                        ("L", "M", "N")})
-
-    def test_find_articulation_points(self):
-        self.assertEqual(self.undirected_graph._find_articulation_points(), {"B", "C", "D", "E"})
-
-    def test_find_subgraph(self):
-        expected = GraphUndirected()
-        expected.add_edge("L", "M", 20)
-        expected.add_edge("L", "N", 60)
-        expected.add_edge("M", "N", 10)
-        self.assertEqual(self.undirected_graph.find_subgraph("M"), expected)
-
-    def test_remove(self):
-        edges = self.undirected_graph.remove("L")
-        self.assertEqual(edges, {("L", "M", 20), ("L", "N", 60)})
 
 if __name__ == "__main__":
     unittest.main()
