@@ -1,0 +1,21 @@
+14
+M R 10
+M Q 0
+M X 24
+N Q 45
+N U 12
+N O 14
+O R 4
+O V 17
+O S 1
+P O 2
+P S 20
+P Z 31
+Q T 7
+R U 17
+R Y 1
+S R 11
+V X 19
+V W 18
+W Z 10
+Y V 14
